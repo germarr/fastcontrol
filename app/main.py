@@ -1,9 +1,20 @@
 from typing import Optional
 from fastapi import FastAPI
 from youtube_dash import main
-from youtube_trending import data_to_dict
+from youtube_trending import data_to_dict, flags
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+origins=['*']
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
@@ -27,23 +38,10 @@ def get_data(URL:str=None):
 @app.get("/trending/{country}")
 def get_country(country:str="MX", values:int=5):
 #db = get_videolist(countries = ['AR', 'AU', 'BO', 'BR', 'CA', 'CL', 'CO', 'CR', 'DE', 'EC', 'ES', 'FR', 'GB', 'IN', 'IT', 'JP', 'KR', 'MX', 'PE', 'PT', 'US', 'UY'] , date = date_new)
-    db = data_to_dict()
-    country = country
-    values= values
-    country_videos = db.loc[db[country] >= 1].reset_index().head(values).transpose().to_dict()
-    single_country = [country_videos[i] for i,x in enumerate(country_videos)]
-    flag_list = []
-
-    for i in range(values):
-        valueOne = i
-        valueTwo = i+1
-        flags = db.loc[db[f"{country}"] == 1].iloc[valueOne:valueTwo,15:-2].reset_index().iloc[:,1:].transpose().reset_index().rename(columns={0:"counts"}).query('counts >0').set_index("index").transpose().columns
-        flag_list.append([])
-            
-        for si in range(len(flags)):
-            flag_list[i].append(flags[si])
+    db = data_to_dict(q=f'SELECT * FROM df_8_26_2021 WHERE {country.lower()} >= 1 ORDER BY dislikecount desc LIMIT {values}')
+    flag_list = flags(pais=country, valor=values)
     
     return {
-        "items":single_country,
+        "items":db,
         "flags":flag_list
     }
