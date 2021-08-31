@@ -7,7 +7,7 @@ import json
 
 datefile = "df_8_26_2021"
 
-def data_to_dict(q=f'SELECT * FROM {datefile} ORDER BY dislikecount desc'):
+def data_to_dict(q):
     conn = psycopg2.connect("host=34.66.221.94 port=5432 dbname=book_db user=postgres password=password")
     cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
     cur.execute(q)
@@ -55,10 +55,10 @@ def data_to_dict(q=f'SELECT * FROM {datefile} ORDER BY dislikecount desc'):
 
     return dfII
 
-def run_query(country, values, datefile=datefile):
+def run_query(q):
     conn = psycopg2.connect("host=34.66.221.94 port=5432 dbname=book_db user=postgres password=password")
     cur = conn.cursor(cursor_factory = psycopg2.extras.RealDictCursor)
-    cur.execute(f'SELECT * FROM {datefile} WHERE {country} >= 1 ORDER BY dislikecount desc LIMIT {values}')
+    cur.execute(q)
     fulldf = cur.fetchall()
     df = [{
         "channel_id":str(i['channel_id']),
@@ -113,8 +113,8 @@ def get_flags(db, valor):
     
     return empty_list_flags
 
-def flags(pais, valor):
-    dataflags = run_query(country=pais, values=valor)
+def flags(q, valor):
+    dataflags = run_query(q)
     empty_list_flags = get_flags(db=dataflags, valor=valor)
     return empty_list_flags
 
